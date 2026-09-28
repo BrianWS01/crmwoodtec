@@ -1,0 +1,8 @@
+# Credenciais do Supabase (use js/config.example.js como modelo)
+js/config.js
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+node_modules/

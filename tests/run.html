@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testes — CRM WoodTec</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body class="p-3">
+  <h1 class="h4">Testes das funções puras</h1>
+  <p id="resumo" class="fw-semibold">Rodando...</p>
+  <ul id="resultados" class="list-group"></ul>
+
+  <script type="module">
+    import { rodar } from './harness.js';
+    import './validators.test.js';
+    import './regras.test.js';
+
+    const resultados = await rodar();
+    const falhas = resultados.filter((r) => !r.ok);
+    const resumo = document.getElementById('resumo');
+    resumo.textContent = `${resultados.length - falhas.length} de ${resultados.length} testes passaram.`;
+    resumo.className = falhas.length ? 'fw-semibold text-danger' : 'fw-semibold text-success';
+
+    document.getElementById('resultados').innerHTML = resultados.map((r) => `
+      <li class="list-group-item ${r.ok ? '' : 'list-group-item-danger'}">
+        ${r.ok ? '✔' : '✘'} ${r.nome}${r.ok ? '' : `<div class="small font-monospace">${r.erro}</div>`}
+      </li>`).join('');
+  </script>
+</body>
+</html>

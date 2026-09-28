@@ -1,0 +1,457 @@
+/* CRM WoodTec — ajustes sobre o Bootstrap 5.3 (tema escuro por padrão, claro opcional) */
+
+/* ---------------------------------------------------------------------
+   Tokens
+   --------------------------------------------------------------------- */
+:root,
+[data-bs-theme="light"] {
+  --crm-fundo: #f3f4f6;
+  --crm-coluna: #e9ebef;
+  --crm-card: #ffffff;
+  --crm-borda: #d7dbe1;
+  --crm-texto-suave: #5b6472;
+}
+
+[data-bs-theme="dark"] {
+  --crm-fundo: #0e1014;
+  --crm-coluna: #161920;
+  --crm-card: #1d2129;
+  --crm-borda: #2a2f39;
+  --crm-texto-suave: #9aa3b2;
+}
+
+/* Cor de cada etapa (usada em blocos, colunas e pílulas) */
+[data-etapa-cor="novo"]             { --etapa: #8b5cf6; }
+[data-etapa-cor="mensagem-enviada"] { --etapa: #3b82f6; }
+[data-etapa-cor="respondeu"]        { --etapa: #06b6d4; }
+[data-etapa-cor="reuniao-marcada"]  { --etapa: #f59e0b; }
+[data-etapa-cor="proposta-enviada"] { --etapa: #ec4899; }
+[data-etapa-cor="fechado"]          { --etapa: #22c55e; }
+[data-etapa-cor="perdido"]          { --etapa: #6b7280; }
+
+body {
+  background: var(--crm-fundo);
+}
+
+.barra-topo {
+  background: var(--crm-coluna);
+  border-color: var(--crm-borda) !important;
+}
+
+/* Foco de teclado sempre visível */
+:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
+.form-text {
+  font-size: 0.8rem;
+}
+
+.login-card {
+  max-width: 400px;
+}
+
+/* ---------------------------------------------------------------------
+   Blocos de resumo por etapa
+   --------------------------------------------------------------------- */
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.resumo-bloco {
+  position: relative;
+  text-align: left;
+  color: var(--bs-body-color);
+  background: color-mix(in srgb, var(--etapa) 22%, var(--crm-coluna));
+  border: 1px solid color-mix(in srgb, var(--etapa) 40%, transparent);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-height: 78px;
+}
+.resumo-bloco:hover {
+  background: color-mix(in srgb, var(--etapa) 30%, var(--crm-coluna));
+}
+.resumo-nome {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-right: 18px;
+}
+.resumo-icone {
+  position: absolute;
+  top: 9px;
+  right: 11px;
+  opacity: 0.6;
+  font-size: 0.85rem;
+}
+.resumo-total {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.resumo-alerta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+[data-bs-theme="light"] .resumo-alerta {
+  color: #b45309;
+}
+
+/* ---------------------------------------------------------------------
+   Filtros
+   --------------------------------------------------------------------- */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.filtro-busca {
+  position: relative;
+  flex: 1 1 260px;
+  max-width: 340px;
+}
+.filtro-busca .bi-search {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--crm-texto-suave);
+  font-size: 0.85rem;
+}
+.filtro-busca .form-control {
+  padding-left: 30px;
+}
+.filtro-select {
+  width: auto;
+  max-width: 200px;
+}
+
+.chip {
+  background: var(--crm-card);
+  border: 1px solid var(--crm-borda);
+  color: var(--bs-body-color);
+  border-radius: 999px;
+}
+.chip:hover {
+  border-color: var(--crm-texto-suave);
+}
+.chip.ativo {
+  background: var(--bs-primary-bg-subtle);
+  border-color: var(--bs-primary);
+}
+.chip-atraso {
+  color: var(--bs-danger-text-emphasis);
+}
+.chip-atraso.ativo {
+  background: var(--bs-danger-bg-subtle);
+  border-color: var(--bs-danger);
+}
+.chip-num {
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Quadro (Kanban)
+   --------------------------------------------------------------------- */
+.quadro {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scroll-snap-type: x proximity;
+}
+
+.coluna {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 150px);
+  background: var(--crm-coluna);
+  border: 1px solid var(--crm-borda);
+  border-radius: 12px;
+  scroll-snap-align: start;
+}
+@media (max-width: 575.98px) {
+  .coluna {
+    flex-basis: 86vw;
+    max-height: calc(100vh - 120px);
+  }
+}
+
+.coluna-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 6px 12px;
+}
+.coluna-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--etapa);
+  flex: none;
+}
+.coluna-titulo {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.coluna-contador {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--crm-card);
+  color: var(--crm-texto-suave);
+}
+.coluna-novo {
+  color: var(--crm-texto-suave);
+  padding: 0 6px;
+}
+.coluna-novo:hover {
+  color: var(--bs-body-color);
+}
+
+.coluna-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 8px 10px;
+  overflow-y: auto;
+  min-height: 90px;
+}
+/* Coluna vazia: área tracejada que também serve de alvo para soltar */
+.coluna-cards:not(:has(.card-lead))::after {
+  content: "—";
+  display: grid;
+  place-items: center;
+  min-height: 60px;
+  border: 1px dashed var(--crm-borda);
+  border-radius: 10px;
+  color: var(--crm-texto-suave);
+}
+.quadro.arrastando .coluna-cards {
+  outline: 1px dashed color-mix(in srgb, var(--etapa) 55%, transparent);
+  outline-offset: -3px;
+  border-radius: 10px;
+}
+
+/* ---------------------------------------------------------------------
+   Card do lead
+   --------------------------------------------------------------------- */
+.card-lead {
+  background: var(--crm-card);
+  border: 1px solid var(--crm-borda);
+  border-left: 3px solid var(--crm-borda);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: grab;
+  user-select: none;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+.card-lead:hover {
+  border-color: var(--crm-texto-suave);
+}
+.card-atrasado,
+.card-atrasado:hover {
+  border-left-color: var(--bs-danger);
+}
+.card-fantasma {
+  opacity: 0.35;
+  border-style: dashed;
+}
+.card-arrastado {
+  cursor: grabbing;
+  transform: rotate(2deg);
+}
+.salvando {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.card-alerta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.card-alerta-atraso {
+  background: var(--bs-danger-bg-subtle);
+  color: var(--bs-danger-text-emphasis);
+}
+.card-alerta-hoje {
+  background: var(--bs-warning-bg-subtle);
+  color: var(--bs-warning-text-emphasis);
+}
+
+.card-topo {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
+  background: hsl(var(--avatar-h) 60% 48%);
+}
+.card-titulo-bloco {
+  min-width: 0;
+}
+.card-nome {
+  display: block;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-align: left;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.card-nome:hover {
+  text-decoration: underline;
+}
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.tag,
+.etapa-pilula {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.tag-segmento {
+  background: color-mix(in srgb, #8b5cf6 22%, transparent);
+  color: color-mix(in srgb, #8b5cf6 55%, var(--bs-body-color));
+}
+.tag-servico {
+  background: color-mix(in srgb, #06b6d4 20%, transparent);
+  color: color-mix(in srgb, #06b6d4 55%, var(--bs-body-color));
+}
+.etapa-pilula {
+  background: color-mix(in srgb, var(--etapa) 22%, transparent);
+  color: color-mix(in srgb, var(--etapa) 60%, var(--bs-body-color));
+}
+
+.card-linhas {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--crm-texto-suave);
+}
+.card-linhas li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+.card-linhas li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.texto-atraso {
+  color: var(--bs-danger-text-emphasis);
+  font-weight: 600;
+}
+
+.card-rodape {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--crm-borda);
+}
+.dias {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.dias-ok      { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.dias-alerta  { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.dias-critico { background: var(--bs-danger-bg-subtle);  color: var(--bs-danger-text-emphasis); }
+.dias-neutro  { background: var(--crm-coluna);           color: var(--crm-texto-suave); }
+
+.btn-whats {
+  color: #25d366;
+  border: 1px solid color-mix(in srgb, #25d366 40%, transparent);
+  padding: 1px 7px;
+}
+.btn-whats:hover {
+  background: color-mix(in srgb, #25d366 15%, transparent);
+  color: #25d366;
+}
+.mover-para {
+  width: auto;
+  max-width: 128px;
+  font-size: 0.72rem;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------
+   Lista
+   --------------------------------------------------------------------- */
+#visao-lista {
+  background: var(--crm-card);
+  border-color: var(--crm-borda);
+}
+.tabela-leads {
+  --bs-table-bg: transparent;
+}
+.tabela-leads td,
+.tabela-leads th {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.tabela-leads td.col-nome {
+  white-space: normal;
+  min-width: 180px;
+}
+
+#estado-vazio {
+  background: var(--crm-card);
+  border-color: var(--crm-borda);
+  margin-bottom: 12px;
+}
