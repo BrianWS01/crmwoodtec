@@ -71,13 +71,23 @@ Eles usam valores definidos no próprio teste e **não acessam o banco**.
 A anon key é pública por natureza (a proteção é o RLS), então o `config.js` pode ir junto no deploy.
 Só não deve ir para o repositório.
 
-- **Netlify (mais simples):** em <https://app.netlify.com/drop>, arraste a pasta do projeto (com o `config.js` dentro).
-- **Vercel / GitHub Pages / Netlify via Git:** como o `config.js` não está no repositório, gere-o no deploy.
-  Exemplo de build command no Netlify/Vercel, com as variáveis `SUPABASE_URL` e `SUPABASE_ANON_KEY` cadastradas no painel:
+### Vercel (configurado no projeto)
 
-  ```
-  printf "export const SUPABASE_URL='%s';\nexport const SUPABASE_ANON_KEY='%s';\n" "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > js/config.js
-  ```
+O `vercel.json` já manda a Vercel rodar `scripts/build-vercel.sh`, que copia o site para `public/`
+e gera o `js/config.js` a partir de duas variáveis de ambiente.
+
+1. Em <https://vercel.com/new>, importe o repositório do GitHub.
+2. Antes de clicar em **Deploy**, abra **Environment Variables** e cadastre:
+   - `SUPABASE_URL` = Project URL do Supabase
+   - `SUPABASE_ANON_KEY` = chave anon / publishable
+3. Clique em **Deploy**. Framework, build e pasta de saída vêm do `vercel.json` (não precisa mexer).
+4. Cada `git push` no `main` publica de novo sozinho.
+
+Se o deploy falhar com "Defina SUPABASE_URL...", faltou cadastrar a variável: cadastre e clique em **Redeploy**.
+
+### Netlify (sem Git)
+
+Em <https://app.netlify.com/drop>, arraste a pasta do projeto (com o `config.js` dentro).
 
 Depois de publicar, em **Authentication** → **URL Configuration** do Supabase, coloque o endereço do site em **Site URL**.
 
@@ -102,6 +112,8 @@ js/ui.js              toasts, confirmação, estados vazios, validação de form
 js/app.js             ponto de entrada do app.html
 supabase/schema.sql   tabelas, constraints, índices, RLS, funções
 tests/                testes das funções puras
+scripts/build-vercel.sh  build da Vercel (gera js/config.js a partir das variáveis)
+vercel.json           configuração do deploy na Vercel
 ```
 
 ## Regras de dados

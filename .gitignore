@@ -1,6 +1,9 @@
 # Credenciais do Supabase (use js/config.example.js como modelo)
 js/config.js
 
+# Saída do build da Vercel (gerada por scripts/build-vercel.sh)
+public/
+
 # Sistema / editor
 .DS_Store
 Thumbs.db
