@@ -88,3 +88,16 @@ export async function listarEnvios(desdeIso) {
   }
   return todos;
 }
+
+// ---------------------------------------------------------------------
+// Configurações da equipe (chave/valor)
+// ---------------------------------------------------------------------
+export async function lerConfig(chave) {
+  const data = await resultado(supabase.from('configuracoes_equipe').select('valor').eq('chave', chave).maybeSingle());
+  return data?.valor ?? null;
+}
+
+export function salvarConfig(chave, valor) {
+  return resultado(supabase.from('configuracoes_equipe')
+    .upsert({ chave, valor, atualizado_em: new Date().toISOString() }));
+}

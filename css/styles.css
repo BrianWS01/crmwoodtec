@@ -701,3 +701,33 @@ body {
 .min-w-0 {
   min-width: 0;
 }
+
+/* ---------------------------------------------------------------------
+   Buscador de leads
+   --------------------------------------------------------------------- */
+.lista-busca {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.item-busca {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--crm-card);
+  border: 1px solid var(--crm-borda);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.item-busca:hover {
+  border-color: var(--crm-texto-suave);
+}
+.item-busca:has(input:checked) {
+  border-color: var(--bs-success);
+  background: color-mix(in srgb, var(--bs-success) 8%, var(--crm-card));
+}
+.item-busca-off {
+  opacity: 0.6;
+  cursor: default;
+}

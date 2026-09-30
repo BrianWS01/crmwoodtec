@@ -476,14 +476,38 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------
+-- Tabela: configuracoes_equipe (chave/valor compartilhado pela equipe,
+-- ex.: chave da API do Google Places usada pelo buscador de leads)
+-- ---------------------------------------------------------------------
+create table if not exists public.configuracoes_equipe (
+  chave         text primary key,
+  valor         text,
+  atualizado_em timestamptz not null default now()
+);
+
+alter table public.configuracoes_equipe enable row level security;
+
+drop policy if exists config_select on public.configuracoes_equipe;
+drop policy if exists config_insert on public.configuracoes_equipe;
+drop policy if exists config_update on public.configuracoes_equipe;
+create policy config_select on public.configuracoes_equipe for select to authenticated
+  using ((select public.eh_membro()));
+create policy config_insert on public.configuracoes_equipe for insert to authenticated
+  with check ((select public.eh_membro()));
+create policy config_update on public.configuracoes_equipe for update to authenticated
+  using ((select public.eh_membro()))
+  with check ((select public.eh_membro()));
+
+-- ---------------------------------------------------------------------
 -- Permissões: só usuário autenticado; anon não acessa nada
 -- ---------------------------------------------------------------------
 revoke all on public.membros, public.leads, public.cadencia,
-              public.mensagens_padrao, public.historico_contatos from anon;
+              public.mensagens_padrao, public.historico_contatos, public.configuracoes_equipe from anon;
 grant select, insert, update, delete
   on public.leads, public.mensagens_padrao, public.historico_contatos
   to authenticated;
 grant select, update on public.membros, public.cadencia to authenticated;
+grant select, insert, update on public.configuracoes_equipe to authenticated;
 
 revoke execute on function public.eh_membro()                             from public, anon;
 revoke execute on function public.mover_lead(uuid, text, boolean)         from public, anon;

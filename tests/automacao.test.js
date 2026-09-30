@@ -255,3 +255,55 @@ teste('Modelos sugeridos: variáveis válidas, gatilhos coerentes e escolha auto
   igual(escolher({ etapa: 'Proposta enviada', segmento: 'X' }), 'Retorno da proposta');
   igual(montarMensagem(MODELO_LIVRE.texto, { responsavel: '' }, { agora: AGORA }), 'Bom dia!\n\n');
 });
+
+// ---------------------------------------------------------------------
+// Buscador de leads (Google Places)
+// ---------------------------------------------------------------------
+teste('Buscador: converte resultado do Google, tipo de telefone e site próprio', async () => {
+  const b = await import('../js/busca-leads.js');
+  const r = b.converterLugar({
+    id: 'g1', displayName: { text: 'Clínica Sorriso' }, primaryTypeDisplayName: { text: 'Dentista' },
+    internationalPhoneNumber: '+55 11 98687-7681', websiteUri: 'https://instagram.com/sorriso',
+    formattedAddress: 'Rua A, 10 - Centro, Jundiaí - SP', rating: 4.8, userRatingCount: 120,
+    addressComponents: [
+      { longText: 'Jundiaí', shortText: 'Jundiaí', types: ['administrative_area_level_2', 'political'] },
+      { longText: 'São Paulo', shortText: 'SP', types: ['administrative_area_level_1', 'political'] },
+    ],
+    googleMapsUri: 'https://maps.google.com/?cid=1', businessStatus: 'OPERATIONAL',
+  });
+  igual(r.telefone, '5511986877681');
+  igual(r.tipoTelefone, 'celular');
+  igual(r.temSite, false, 'Instagram não é site próprio');
+  igual(r.cidade, 'Jundiaí');
+  igual(r.uf, 'SP');
+  igual(b.converterLugar({ id: 'g2', nationalPhoneNumber: '(11) 4039-3981' }).tipoTelefone, 'fixo');
+  igual(b.converterLugar({ id: 'g3' }).tipoTelefone, 'nenhum');
+  verdadeiro(b.siteProprio('https://clinicasorriso.com.br'));
+  falso(b.siteProprio('https://linktr.ee/x'));
+});
+
+teste('Buscador: marca quem já está no CRM, filtra e monta o lead', async () => {
+  const b = await import('../js/busca-leads.js');
+  const base = { tipoTelefone: 'celular', temSite: false, fechado: false };
+  const resultados = b.marcarExistentes([
+    { ...base, googleId: '1', nome: 'A', telefone: '5511986877681' },
+    { ...base, googleId: '2', nome: 'B', telefone: '5511911112222', temSite: true, site: 'https://b.com.br' },
+    { ...base, googleId: '3', nome: 'C', telefone: '551140393981', tipoTelefone: 'fixo' },
+    { ...base, googleId: '4', nome: 'D', telefone: null, tipoTelefone: 'nenhum' },
+    { ...base, googleId: '5', nome: 'E', telefone: '5511933334444', fechado: true },
+    { ...base, googleId: '1', nome: 'A repetido', telefone: '5511986877681' },
+  ], [{ nome: 'Já tenho', telefone: '5511986877681' }]);
+  igual(resultados.length, 5, 'repetido some');
+  igual(resultados[0].noCrm, 'Já tenho');
+  igualProfundo(b.filtrarResultados(resultados, { esconderNoCrm: true }).map((r) => r.googleId), ['2', '3', '4']);
+  igualProfundo(b.filtrarResultados(resultados, { semSite: true, soCelular: true }).map((r) => r.googleId), ['1']);
+  igualProfundo(resultados.filter(b.podeAdicionar).map((r) => r.googleId), ['2', '3']);
+  const lead = b.leadDoResultado({ ...resultados[2], cidade: 'Jundiaí', uf: 'SP', nota: 4.5, avaliacoes: 10 }, { segmento: 'Odontologia', vendedor_id: 'u1' });
+  igual(lead.servico, 'Site institucional');
+  igual(lead.origem, 'Google Maps');
+  verdadeiro(lead.observacoes.includes('Telefone: Fixo') && lead.observacoes.includes('Sem site'));
+  igual(validarLead(lead).valido, true, 'lead gerado passa na validação');
+  igual(b.leadDoResultado(resultados[1], { segmento: 'X' }).servico, null, 'tem site: serviço a avaliar');
+  igual(b.nichoDoTexto('dentistas / clínicas odontológicas').segmento, 'Odontologia');
+  igual(b.nichoDoTexto('xyz'), null);
+});

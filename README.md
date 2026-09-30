@@ -28,6 +28,9 @@ HTML + Bootstrap 5 + JavaScript puro (ES Modules) + Supabase. Sem etapa de build
 - **CNPJ:** botão Buscar no cadastro preenche nome, telefone, e-mail, cidade, UF e responsável (BrasilAPI).
 - **Equipe:** todo usuário criado em Authentication vira membro e vê os mesmos leads; cada lead tem um vendedor.
   Mudanças de um aparecem na tela do outro em tempo real.
+- **Buscar leads:** busca empresas no Google (Places API) por nicho e cidade, mostra quem não tem site e quem tem celular,
+  marca quem já está no CRM e adiciona os escolhidos com segmento, serviço sugerido e observações. A chave do Google
+  fica na tabela `configuracoes_equipe` (só membros leem); restrinja a chave por referenciador HTTP no Google Cloud.
 - **Resultados:** conversão, ciclo médio, funil, leads por origem e segmento, mensagens e fechamentos por vendedor.
 
 ---
@@ -131,6 +134,8 @@ js/mensagens.js       variáveis, saudação e escolha do modelo (puro)
 js/importar.js        leitura de CSV, mapeamento e validação da importação (puro)
 js/importacao.js      tela de importação (usa SheetJS para .xlsx)
 js/cnpj.js            consulta de CNPJ na BrasilAPI
+js/busca-leads.js     busca no Google Places e conversão dos resultados
+js/buscador.js        tela do buscador de leads
 js/metricas.js        números do painel (puro)
 js/painel.js          visão Resultados
 js/configuracoes.js   mensagens, cadência e equipe

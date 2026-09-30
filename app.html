@@ -18,6 +18,9 @@
       <span class="navbar-brand fw-bold mb-0">CRM <span class="text-body-secondary">·</span> WoodTec</span>
       <div class="ms-auto d-flex align-items-center gap-2">
         <span id="usuario-email" class="text-body-secondary small d-none d-md-inline"></span>
+        <button type="button" id="btn-buscar-leads" class="btn btn-sm btn-primary" title="Buscar empresas no Google e colocar no CRM">
+          <i class="bi bi-binoculars" aria-hidden="true"></i><span class="d-none d-lg-inline ms-1">Buscar leads</span>
+        </button>
         <button type="button" id="btn-importar" class="btn btn-sm btn-outline-secondary" title="Importar planilha de leads">
           <i class="bi bi-upload" aria-hidden="true"></i><span class="d-none d-lg-inline ms-1">Importar</span>
         </button>
@@ -307,6 +310,20 @@
         </div>
         <div class="modal-body" id="importar-corpo"></div>
         <div class="modal-footer" id="importar-rodape"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: buscador de leads -->
+  <div class="modal fade" id="modal-buscador" tabindex="-1" aria-labelledby="modal-buscador-titulo">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-lg-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="modal-buscador-titulo"><i class="bi bi-binoculars me-1" aria-hidden="true"></i>Buscar leads no Google</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body" id="buscador-corpo"></div>
+        <div class="modal-footer" id="buscador-rodape"></div>
       </div>
     </div>
   </div>

@@ -19,6 +19,7 @@ import { criarPainel } from './painel.js';
 import { criarEnvio } from './envio.js';
 import { criarImportacao } from './importacao.js';
 import { criarConfiguracoes } from './configuracoes.js';
+import { criarBuscador } from './buscador.js';
 import { supabase, mensagemDeErro } from './supabase.js';
 import {
   toast, estadoVazio, mostrarErros, limparValidacao, marcarInvalido, carregando, escapeHtml, confirmar,
@@ -162,6 +163,19 @@ const importacao = criarImportacao({
     render();
   },
 });
+const buscador = criarBuscador({
+  leads: () => estado.leads,
+  membros: () => estado.membros,
+  usuarioId: () => estado.usuario?.id,
+  lerConfig: dados.lerConfig,
+  salvarConfig: dados.salvarConfig,
+  gravar: leadsApi.criarLeadsEmLote,
+  onAdicionados: (criados) => {
+    const ids = new Set(estado.leads.map((l) => l.id));
+    estado.leads.unshift(...criados.filter((l) => !ids.has(l.id)));
+    render();
+  },
+});
 const configuracoes = criarConfiguracoes({
   mensagens: () => estado.mensagens,
   setMensagens: (lista) => { estado.mensagens = lista; },
@@ -182,6 +196,7 @@ async function iniciar() {
   document.getElementById('usuario-email').textContent = usuario.email;
   document.getElementById('btn-sair').addEventListener('click', sair);
   document.getElementById('btn-tema').addEventListener('click', alternarTema);
+  document.getElementById('btn-buscar-leads').addEventListener('click', () => buscador.abrir());
   document.getElementById('btn-importar').addEventListener('click', () => importacao.abrir());
   document.getElementById('btn-config').addEventListener('click', () => configuracoes.abrir());
   document.querySelectorAll('[data-acao="novo-lead"]').forEach((b) =>
