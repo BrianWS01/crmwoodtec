@@ -18,6 +18,12 @@
       <span class="navbar-brand fw-bold mb-0">CRM <span class="text-body-secondary">·</span> WoodTec</span>
       <div class="ms-auto d-flex align-items-center gap-2">
         <span id="usuario-email" class="text-body-secondary small d-none d-md-inline"></span>
+        <button type="button" id="btn-importar" class="btn btn-sm btn-outline-secondary" title="Importar planilha de leads">
+          <i class="bi bi-upload" aria-hidden="true"></i><span class="d-none d-lg-inline ms-1">Importar</span>
+        </button>
+        <button type="button" id="btn-config" class="btn btn-sm btn-outline-secondary" title="Mensagens, follow-up e equipe">
+          <i class="bi bi-gear" aria-hidden="true"></i><span class="d-none d-lg-inline ms-1">Configurações</span>
+        </button>
         <button type="button" id="btn-tema" class="btn btn-sm btn-outline-secondary" title="Alternar tema claro/escuro"
                 aria-label="Alternar tema claro/escuro">
           <i class="bi bi-circle-half" aria-hidden="true"></i>
@@ -32,14 +38,18 @@
   <main class="container-fluid py-3">
     <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
       <div class="me-auto">
-        <h1 class="h4 fw-bold mb-0">Pipeline</h1>
-        <p class="small text-body-secondary mb-0">Arraste o card para mudar a etapa. Quem precisa de ação aparece primeiro.</p>
+        <h1 class="h4 fw-bold mb-0" id="titulo-visao">Hoje</h1>
+        <p class="small text-body-secondary mb-0" id="subtitulo-visao"></p>
       </div>
-      <div class="btn-group" role="group" aria-label="Forma de visualizar">
-        <input type="radio" class="btn-check" name="visao" id="visao-funil-btn" value="funil" checked>
+      <div class="btn-group flex-wrap" role="group" aria-label="Forma de visualizar">
+        <input type="radio" class="btn-check" name="visao" id="visao-hoje-btn" value="hoje" checked>
+        <label class="btn btn-sm btn-outline-secondary" for="visao-hoje-btn"><i class="bi bi-lightning-charge me-1" aria-hidden="true"></i>Hoje<span class="badge text-bg-danger ms-1 d-none" id="badge-hoje"></span></label>
+        <input type="radio" class="btn-check" name="visao" id="visao-funil-btn" value="funil">
         <label class="btn btn-sm btn-outline-secondary" for="visao-funil-btn"><i class="bi bi-kanban me-1" aria-hidden="true"></i>Funil</label>
         <input type="radio" class="btn-check" name="visao" id="visao-lista-btn" value="lista">
         <label class="btn btn-sm btn-outline-secondary" for="visao-lista-btn"><i class="bi bi-list-ul me-1" aria-hidden="true"></i>Lista</label>
+        <input type="radio" class="btn-check" name="visao" id="visao-resultados-btn" value="resultados">
+        <label class="btn btn-sm btn-outline-secondary" for="visao-resultados-btn"><i class="bi bi-bar-chart me-1" aria-hidden="true"></i>Resultados</label>
       </div>
       <button type="button" class="btn btn-success btn-sm" data-acao="novo-lead">
         <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Novo lead
@@ -47,10 +57,10 @@
     </div>
 
     <!-- Blocos de resumo por etapa -->
-    <div id="resumo" class="resumo mb-3" aria-label="Resumo por etapa"></div>
+    <div id="resumo" class="resumo mb-3 d-none" aria-label="Resumo por etapa"></div>
 
     <!-- Filtros -->
-    <div class="filtros mb-3">
+    <div class="filtros mb-3" id="filtros">
       <div class="filtro-busca">
         <label for="busca" class="visually-hidden">Buscar</label>
         <i class="bi bi-search" aria-hidden="true"></i>
@@ -58,6 +68,10 @@
                placeholder="Buscar por nome, CNPJ, telefone ou responsável"
                title="Pode digitar só parte do nome ou só os números.">
       </div>
+      <select id="filtro-vendedor" class="form-select form-select-sm filtro-select" aria-label="Filtrar por vendedor"
+              title="Mostra só os leads deste vendedor">
+        <option value="">Toda a equipe</option>
+      </select>
       <select id="filtro-segmento" class="form-select form-select-sm filtro-select" aria-label="Filtrar por segmento"
               title="Mostra só os leads deste segmento">
         <option value="">Todos os segmentos</option>
@@ -66,7 +80,7 @@
               title="Mostra só os leads deste serviço">
         <option value="">Todos os serviços</option>
       </select>
-      <div class="d-flex flex-wrap gap-1" role="group" aria-label="Situação">
+      <div class="d-flex flex-wrap gap-1" role="group" aria-label="Situação" id="chips-situacao">
         <button type="button" class="btn btn-sm chip chip-atraso" data-situacao="atrasados" aria-pressed="false"
                 title="Follow-up com data já vencida">
           <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Atrasados <span class="chip-num" data-num="atrasados">0</span>
@@ -85,108 +99,165 @@
     </div>
 
     <div id="estado-vazio" class="card d-none"></div>
-    <div id="visao-funil" class="quadro" aria-live="polite">
-      <div class="text-center py-5 w-100"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Carregando...</span></div></div>
-    </div>
+    <section id="visao-hoje" class="d-none" aria-live="polite"></section>
+    <div id="visao-funil" class="quadro d-none" aria-live="polite"></div>
     <section id="visao-lista" class="card d-none"></section>
+    <section id="visao-resultados" class="d-none"></section>
+    <div id="carregando" class="text-center py-5 w-100"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Carregando...</span></div></div>
   </main>
 
   <!-- Modal: cadastro / edição de lead -->
   <div class="modal fade" id="modal-lead" tabindex="-1" aria-labelledby="modal-lead-titulo">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
-      <form id="form-lead" class="modal-content" novalidate>
-        <div class="modal-header">
+      <form id="form-lead" class="modal-content" method="post" novalidate>
+        <div class="modal-header flex-wrap gap-2">
           <h2 class="modal-title fs-5" id="modal-lead-titulo">Novo lead</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          <ul class="nav nav-underline w-100 small d-none" id="abas-lead" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="aba-dados" data-bs-toggle="tab" data-bs-target="#painel-dados" type="button" role="tab"
+                      aria-controls="painel-dados" aria-selected="true">Dados</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="aba-historico" data-bs-toggle="tab" data-bs-target="#painel-historico" type="button" role="tab"
+                      aria-controls="painel-historico" aria-selected="false">Histórico <span class="badge text-bg-secondary" id="historico-num"></span></button>
+            </li>
+          </ul>
         </div>
-        <div class="modal-body">
-          <p class="small text-body-secondary">Campos com <span class="text-danger">*</span> são obrigatórios.</p>
-          <div class="row g-3">
-            <div class="col-12 col-md-8">
-              <label for="lead-nome" class="form-label">Nome da empresa <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="lead-nome" name="nome" maxlength="200"
-                     placeholder="Nome fantasia ou razão social" aria-describedby="dica-nome">
-              <div id="dica-nome" class="form-text">Como a empresa é conhecida. É o que aparece no card e na mensagem ({nome}).</div>
-              <div class="invalid-feedback" data-campo="nome"></div>
-            </div>
-            <div class="col-12 col-md-4">
-              <label for="lead-cnpj" class="form-label">CNPJ</label>
-              <input type="text" class="form-control" id="lead-cnpj" name="cnpj" inputmode="numeric"
-                     placeholder="00.000.000/0000-00" aria-describedby="dica-cnpj">
-              <div id="dica-cnpj" class="form-text">Opcional. Só números; a máscara é colocada sozinha. Os dígitos verificadores são conferidos.</div>
-              <div class="invalid-feedback" data-campo="cnpj"></div>
-            </div>
+        <div class="modal-body tab-content">
+          <div class="tab-pane fade show active" id="painel-dados" role="tabpanel" aria-labelledby="aba-dados" tabindex="0">
+            <p class="small text-body-secondary">Campos com <span class="text-danger">*</span> são obrigatórios. Tem o CNPJ? Digite e clique em <b>Buscar</b> que o resto é preenchido.</p>
+            <div class="row g-3">
+              <div class="col-12 col-md-5">
+                <label for="lead-cnpj" class="form-label">CNPJ</label>
+                <div class="input-group has-validation">
+                  <input type="text" class="form-control" id="lead-cnpj" name="cnpj" inputmode="numeric"
+                         placeholder="00.000.000/0000-00" aria-describedby="dica-cnpj">
+                  <button type="button" class="btn btn-outline-primary" id="btn-buscar-cnpj" title="Preencher com os dados da Receita">
+                    <i class="bi bi-search me-1" aria-hidden="true"></i>Buscar
+                  </button>
+                  <div class="invalid-feedback" data-campo="cnpj"></div>
+                </div>
+                <div id="dica-cnpj" class="form-text">Opcional. Preenche nome, telefone, e-mail, cidade e responsável (dados públicos da Receita).</div>
+              </div>
+              <div class="col-12 col-md-7">
+                <label for="lead-nome" class="form-label">Nome da empresa <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="lead-nome" name="nome" maxlength="200"
+                       placeholder="Nome fantasia ou razão social" aria-describedby="dica-nome">
+                <div id="dica-nome" class="form-text">Como a empresa é conhecida. Entra na mensagem como {empresa}.</div>
+                <div class="invalid-feedback" data-campo="nome"></div>
+              </div>
 
-            <div class="col-12 col-md-6">
-              <label for="lead-telefone" class="form-label">Telefone / WhatsApp <span class="text-danger">*</span></label>
-              <input type="tel" class="form-control" id="lead-telefone" name="telefone" inputmode="tel"
-                     placeholder="(00) 00000-0000" aria-describedby="dica-telefone">
-              <div id="dica-telefone" class="form-text">DDD + número. É salvo como 55 + DDD + 8 ou 9 dígitos. Pode colar com +55 que é ajustado.</div>
-              <div class="invalid-feedback" data-campo="telefone"></div>
-            </div>
-            <div class="col-12 col-md-6">
-              <label for="lead-responsavel" class="form-label">Responsável</label>
-              <input type="text" class="form-control" id="lead-responsavel" name="responsavel" maxlength="120"
-                     placeholder="Nome da pessoa de contato" aria-describedby="dica-responsavel">
-              <div id="dica-responsavel" class="form-text">Quem você vai abordar. Entra na saudação da mensagem ("Bom dia, {responsável}").</div>
-            </div>
+              <div class="col-12 col-md-6">
+                <label for="lead-telefone" class="form-label">Telefone / WhatsApp <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" id="lead-telefone" name="telefone" inputmode="tel"
+                       placeholder="(00) 00000-0000" aria-describedby="dica-telefone">
+                <div id="dica-telefone" class="form-text">DDD + número. Pode colar com +55 que é ajustado.</div>
+                <div class="invalid-feedback" data-campo="telefone"></div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="lead-responsavel" class="form-label">Responsável</label>
+                <input type="text" class="form-control" id="lead-responsavel" name="responsavel" maxlength="120"
+                       placeholder="Nome da pessoa de contato" aria-describedby="dica-responsavel">
+                <div id="dica-responsavel" class="form-text">Quem você vai abordar. Entra na saudação ({responsavel}).</div>
+              </div>
 
-            <div class="col-12 col-md-6">
-              <label for="lead-segmento" class="form-label">Segmento <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="lead-segmento" name="segmento" list="lista-segmentos" maxlength="120"
-                     placeholder="Escolha da lista ou digite um novo" aria-describedby="dica-segmento">
-              <datalist id="lista-segmentos"></datalist>
-              <div id="dica-segmento" class="form-text">Ramo da empresa. Use sempre a mesma escrita para os filtros funcionarem.</div>
-              <div class="invalid-feedback" data-campo="segmento"></div>
-            </div>
-            <div class="col-12 col-md-6">
-              <label for="lead-servico" class="form-label">Serviço</label>
-              <select class="form-select" id="lead-servico" name="servico" aria-describedby="dica-servico">
-                <option value="">Ainda não definido</option>
-              </select>
-              <div id="dica-servico" class="form-text">A solução que você pretende oferecer. Ajuda a escolher a mensagem certa.</div>
-              <div class="invalid-feedback" data-campo="servico"></div>
-            </div>
+              <div class="col-12 col-md-6">
+                <label for="lead-segmento" class="form-label">Segmento <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="lead-segmento" name="segmento" list="lista-segmentos" maxlength="120"
+                       placeholder="Escolha da lista ou digite um novo" aria-describedby="dica-segmento">
+                <datalist id="lista-segmentos"></datalist>
+                <div id="dica-segmento" class="form-text">Ramo da empresa. Use sempre a mesma escrita para os filtros funcionarem.</div>
+                <div class="invalid-feedback" data-campo="segmento"></div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="lead-servico" class="form-label">Serviço</label>
+                <select class="form-select" id="lead-servico" name="servico" aria-describedby="dica-servico">
+                  <option value="">Ainda não definido</option>
+                </select>
+                <div id="dica-servico" class="form-text">A solução que você pretende oferecer. Ajuda a escolher a mensagem certa.</div>
+                <div class="invalid-feedback" data-campo="servico"></div>
+              </div>
 
-            <div class="col-12 col-md-6">
-              <label for="lead-etapa" class="form-label">Etapa</label>
-              <select class="form-select" id="lead-etapa" name="etapa" aria-describedby="dica-etapa"></select>
-              <div id="dica-etapa" class="form-text">Em que ponto da negociação o lead está. Lead novo começa em "Novo".</div>
-              <div class="invalid-feedback" data-campo="etapa"></div>
-            </div>
-            <div class="col-12 col-md-6">
-              <label for="lead-follow-up" class="form-label">Follow-up em</label>
-              <input type="date" class="form-control" id="lead-follow-up" name="follow_up_em" aria-describedby="dica-follow-up">
-              <div id="dica-follow-up" class="form-text">Data para retomar o contato. Vencida, o card ganha o alerta "Contato atrasado".</div>
-              <div class="invalid-feedback" data-campo="follow_up_em"></div>
-            </div>
+              <div class="col-12 col-md-4">
+                <label for="lead-vendedor" class="form-label">Vendedor</label>
+                <select class="form-select" id="lead-vendedor" name="vendedor_id" aria-describedby="dica-vendedor"></select>
+                <div id="dica-vendedor" class="form-text">Quem cuida deste lead.</div>
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="lead-etapa" class="form-label">Etapa</label>
+                <select class="form-select" id="lead-etapa" name="etapa" aria-describedby="dica-etapa"></select>
+                <div id="dica-etapa" class="form-text">Ao mudar, o follow-up é agendado sozinho.</div>
+                <div class="invalid-feedback" data-campo="etapa"></div>
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="lead-follow-up" class="form-label">Follow-up em</label>
+                <input type="date" class="form-control" id="lead-follow-up" name="follow_up_em" aria-describedby="dica-follow-up">
+                <div id="dica-follow-up" class="form-text">Data para retomar o contato.</div>
+                <div class="invalid-feedback" data-campo="follow_up_em"></div>
+              </div>
 
-            <div class="col-12">
-              <label for="lead-origem" class="form-label">Origem</label>
-              <input type="text" class="form-control" id="lead-origem" name="origem" maxlength="120"
-                     placeholder="De onde veio o lead: Instagram, indicação, Google Maps..." aria-describedby="dica-origem">
-              <div id="dica-origem" class="form-text">Opcional. Serve para saber quais canais trazem mais clientes.</div>
+              <div class="col-12 col-md-5">
+                <label for="lead-email" class="form-label">E-mail</label>
+                <input type="email" class="form-control" id="lead-email" name="email" maxlength="200" placeholder="contato@empresa.com.br">
+                <div class="invalid-feedback" data-campo="email"></div>
+              </div>
+              <div class="col-8 col-md-5">
+                <label for="lead-cidade" class="form-label">Cidade</label>
+                <input type="text" class="form-control" id="lead-cidade" name="cidade" maxlength="120">
+              </div>
+              <div class="col-4 col-md-2">
+                <label for="lead-uf" class="form-label">UF</label>
+                <input type="text" class="form-control text-uppercase" id="lead-uf" name="uf" maxlength="2" placeholder="SP">
+                <div class="invalid-feedback" data-campo="uf"></div>
+              </div>
+
+              <div class="col-12">
+                <label for="lead-origem" class="form-label">Origem</label>
+                <input type="text" class="form-control" id="lead-origem" name="origem" maxlength="120" list="lista-origens"
+                       placeholder="De onde veio o lead: Instagram, indicação, Google Maps..." aria-describedby="dica-origem">
+                <datalist id="lista-origens"></datalist>
+                <div id="dica-origem" class="form-text">Serve para o painel mostrar quais canais trazem mais clientes.</div>
+              </div>
+              <div class="col-12">
+                <label for="lead-observacoes" class="form-label">Observações</label>
+                <textarea class="form-control" id="lead-observacoes" name="observacoes" rows="3"
+                          placeholder="Anotações fixas sobre o lead" aria-describedby="dica-observacoes"></textarea>
+                <div id="dica-observacoes" class="form-text">Para registrar o que foi conversado, use a aba Histórico (fica com data e autor).</div>
+              </div>
             </div>
-            <div class="col-12">
-              <label for="lead-observacoes" class="form-label">Observações</label>
-              <textarea class="form-control" id="lead-observacoes" name="observacoes" rows="3"
-                        placeholder="Anotações livres sobre o lead" aria-describedby="dica-observacoes"></textarea>
-              <div id="dica-observacoes" class="form-text">Opcional. Ex.: horário bom para ligar, objeções, concorrente atual.</div>
+            <p id="lead-datas" class="small text-body-secondary mt-3 mb-0"></p>
+
+            <div id="confirmar-exclusao" class="alert alert-danger mt-3 mb-0 d-none" role="alert">
+              <p id="confirmar-exclusao-texto" class="mb-2"></p>
+              <div class="d-flex gap-2">
+                <button type="button" id="btn-confirmar-exclusao" class="btn btn-danger btn-sm">Sim, excluir</button>
+                <button type="button" id="btn-cancelar-exclusao" class="btn btn-outline-secondary btn-sm">Não</button>
+              </div>
             </div>
           </div>
-          <p id="lead-datas" class="small text-body-secondary mt-3 mb-0"></p>
 
-          <div id="confirmar-exclusao" class="alert alert-danger mt-3 mb-0 d-none" role="alert">
-            <p id="confirmar-exclusao-texto" class="mb-2"></p>
-            <div class="d-flex gap-2">
-              <button type="button" id="btn-confirmar-exclusao" class="btn btn-danger btn-sm">Sim, excluir</button>
-              <button type="button" id="btn-cancelar-exclusao" class="btn btn-outline-secondary btn-sm">Não</button>
+          <div class="tab-pane fade" id="painel-historico" role="tabpanel" aria-labelledby="aba-historico" tabindex="0">
+            <label for="nova-nota" class="form-label fw-semibold">Registrar conversa</label>
+            <textarea id="nova-nota" class="form-control" rows="2" placeholder="Ex.: Falou que vai ver com o sócio e retorna sexta."></textarea>
+            <div class="d-flex flex-wrap gap-2 align-items-center mt-2 mb-3">
+              <button type="button" id="btn-salvar-nota" class="btn btn-sm btn-primary"><i class="bi bi-journal-plus me-1" aria-hidden="true"></i>Salvar anotação</button>
+              <span class="small text-body-secondary">Agendar retorno:</span>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Agendar retorno" id="nota-retorno">
+                <button type="button" class="btn btn-outline-secondary" data-dias="1">Amanhã</button>
+                <button type="button" class="btn btn-outline-secondary" data-dias="3">3 dias</button>
+                <button type="button" class="btn btn-outline-secondary" data-dias="7">1 semana</button>
+              </div>
             </div>
+            <ol id="historico-lista" class="linha-tempo list-unstyled mb-0"></ol>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" id="btn-excluir-lead" class="btn btn-outline-danger me-auto d-none">
             <i class="bi bi-trash me-1" aria-hidden="true"></i>Excluir
+          </button>
+          <button type="button" id="btn-whats-modal" class="btn btn-whats-cheio d-none">
+            <i class="bi bi-whatsapp me-1" aria-hidden="true"></i>WhatsApp
           </button>
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" id="btn-salvar-lead" class="btn btn-success">
@@ -197,11 +268,82 @@
     </div>
   </div>
 
+  <!-- Modal: enviar WhatsApp -->
+  <div class="modal fade" id="modal-envio" tabindex="-1" aria-labelledby="modal-envio-titulo">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="modal-envio-titulo"><i class="bi bi-whatsapp text-success me-1" aria-hidden="true"></i>Enviar mensagem</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2"><span class="fw-semibold" id="envio-lead-nome"></span> <span class="text-body-secondary small" id="envio-lead-info"></span></p>
+          <div id="envio-alerta" class="alert alert-warning py-2 small d-none"></div>
+          <label for="envio-modelo" class="form-label small">Modelo</label>
+          <select id="envio-modelo" class="form-select form-select-sm mb-2"></select>
+          <label for="envio-texto" class="form-label small">Mensagem (pode editar antes de enviar)</label>
+          <textarea id="envio-texto" class="form-control" rows="8"></textarea>
+          <p class="form-text mb-0" id="envio-dica"></p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" id="envio-so-abrir" class="btn btn-link btn-sm me-auto" target="_blank" rel="noopener"
+             title="Abre a conversa sem registrar envio (ex.: só para responder)">Só abrir conversa</a>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" id="envio-confirmar" class="btn btn-success">
+            <i class="bi bi-send me-1" aria-hidden="true"></i>Abrir WhatsApp e registrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: importar planilha -->
+  <div class="modal fade" id="modal-importar" tabindex="-1" aria-labelledby="modal-importar-titulo" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-lg-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="modal-importar-titulo"><i class="bi bi-upload me-1" aria-hidden="true"></i>Importar leads</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body" id="importar-corpo"></div>
+        <div class="modal-footer" id="importar-rodape"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: configurações -->
+  <div class="modal fade" id="modal-config" tabindex="-1" aria-labelledby="modal-config-titulo">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+      <div class="modal-content">
+        <div class="modal-header flex-wrap gap-2">
+          <h2 class="modal-title fs-5" id="modal-config-titulo"><i class="bi bi-gear me-1" aria-hidden="true"></i>Configurações</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          <ul class="nav nav-underline w-100 small" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cfg-mensagens" type="button" role="tab">Mensagens</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cfg-cadencia" type="button" role="tab">Follow-up automático</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cfg-equipe" type="button" role="tab">Equipe</button>
+            </li>
+          </ul>
+        </div>
+        <div class="modal-body tab-content">
+          <div class="tab-pane fade show active" id="cfg-mensagens" role="tabpanel" tabindex="0"></div>
+          <div class="tab-pane fade" id="cfg-cadencia" role="tabpanel" tabindex="0"></div>
+          <div class="tab-pane fade" id="cfg-equipe" role="tabpanel" tabindex="0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import('./js/app.js').catch((erro) => {
       console.error(erro);
-      document.getElementById('visao-funil').innerHTML =
+      document.getElementById('carregando').innerHTML =
         '<div class="alert alert-danger m-3">Não foi possível iniciar. Verifique se <code>js/config.js</code> existe ' +
         '(copie de <code>js/config.example.js</code>) e se você está usando um servidor local (ex.: Live Server).</div>';
     });

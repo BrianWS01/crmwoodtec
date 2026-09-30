@@ -4,7 +4,7 @@ import { ETAPAS } from './constants.js';
 import { formatarTelefone, formatarCnpj, formatarDataBr } from './validators.js';
 import {
   slugEtapa, etapaFinal, diasNaEtapa, situacaoFollowUp, estaParado, ordenarPorPrioridade,
-  resumoPorEtapa, inicial, matizDoNome, DIAS_PARADO,
+  resumoPorEtapa, inicial, matizDoNome, sugerirPerdido, DIAS_PARADO,
 } from './regras.js';
 import { escapeHtml } from './ui.js';
 
@@ -24,8 +24,10 @@ const ICONES_ETAPA = {
  *   onAbrir(id)             abre o lead no modal
  *   onNovo(etapa)           cadastra lead já na etapa
  *   onMover(id, etapa)      grava a mudança; o app re-renderiza (sucesso ou falha)
+ *   onEnviar(id)            abre o envio de WhatsApp
+ *   nomeDoVendedor(id)      nome curto do vendedor para a etiqueta do card
  */
-export function criarPipeline(elQuadro, elResumo, { onAbrir, onNovo, onMover }) {
+export function criarPipeline(elQuadro, elResumo, { onAbrir, onNovo, onMover, onEnviar, nomeDoVendedor = () => '' }) {
   let sortables = [];
   let arrastando = false;
 
@@ -34,6 +36,8 @@ export function criarPipeline(elQuadro, elResumo, { onAbrir, onNovo, onMover }) 
     if (arrastando) return;
     const novo = ev.target.closest('[data-novo]');
     if (novo) return onNovo(novo.dataset.novo);
+    const enviar = ev.target.closest('[data-enviar]');
+    if (enviar) return onEnviar(enviar.dataset.enviar);
     if (ev.target.closest('.no-drag')) return; // WhatsApp, "Mover para"
     const card = ev.target.closest('.card-lead');
     if (card) onAbrir(card.dataset.id);
@@ -98,7 +102,7 @@ export function criarPipeline(elQuadro, elResumo, { onAbrir, onNovo, onMover }) 
           </button>
         </header>
         <div class="coluna-cards" data-etapa="${escapeHtml(etapa)}">
-          ${porEtapa[etapa].map((l) => cardHtml(l, agora)).join('')}
+          ${porEtapa[etapa].map((l) => cardHtml(l, agora, nomeDoVendedor)).join('')}
         </div>
       </section>`).join('');
 
@@ -129,7 +133,8 @@ export function criarPipeline(elQuadro, elResumo, { onAbrir, onNovo, onMover }) 
   return { render };
 }
 
-function cardHtml(l, agora) {
+function cardHtml(l, agora, nomeDoVendedor) {
+  const vendedor = nomeDoVendedor(l.vendedor_id);
   const fu = situacaoFollowUp(l, agora);
   const dias = diasNaEtapa(l, agora);
   const parado = estaParado(l, agora);
@@ -169,6 +174,8 @@ function cardHtml(l, agora) {
           <div class="card-tags">
             <span class="tag tag-segmento">${escapeHtml(l.segmento)}</span>
             ${l.servico ? `<span class="tag tag-servico">${escapeHtml(l.servico)}</span>` : ''}
+            ${vendedor ? `<span class="tag tag-vendedor" title="Vendedor">${escapeHtml(vendedor)}</span>` : ''}
+            ${sugerirPerdido(l) ? `<span class="tag tag-tentativas" title="Mensagens sem resposta">${l.tentativas}× sem resposta</span>` : ''}
           </div>
         </div>
       </div>
@@ -176,10 +183,10 @@ function cardHtml(l, agora) {
       <footer class="card-rodape">
         <span class="dias ${classeDias}" title="${tituloDias}"><i class="bi bi-clock" aria-hidden="true"></i> ${dias}d</span>
         <div class="d-flex align-items-center gap-1 ms-auto">
-          <a class="btn btn-sm btn-whats no-drag" href="https://wa.me/${l.telefone}" target="_blank" rel="noopener"
-             title="Abrir conversa no WhatsApp" aria-label="Abrir ${escapeHtml(l.nome)} no WhatsApp">
+          <button type="button" class="btn btn-sm btn-whats no-drag" data-enviar="${l.id}"
+             title="Mensagem pronta no WhatsApp" aria-label="Enviar WhatsApp para ${escapeHtml(l.nome)}">
             <i class="bi bi-whatsapp" aria-hidden="true"></i>
-          </a>
+          </button>
           <select class="form-select form-select-sm mover-para no-drag" data-mover="${l.id}"
                   aria-label="Mover ${escapeHtml(l.nome)} para outra etapa">
             <option value="">Mover para…</option>

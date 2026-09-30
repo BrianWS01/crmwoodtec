@@ -11,9 +11,24 @@ HTML + Bootstrap 5 + JavaScript puro (ES Modules) + Supabase. Sem etapa de build
 |---|---|---|
 | 1 | Schema Supabase, login, cadastro, validações | ✅ |
 | 2 | Pipeline Kanban com drag and drop | ✅ |
-| 3 | Importação CSV/TXT com prévia e mapeamento | ⏳ |
-| 4 | Mensagens padrão, envio WhatsApp, disparo em sequência | ⏳ |
-| 5 | Exportação, histórico e ajustes | ⏳ |
+| 3 | Importação CSV/TXT/Excel com prévia, mapeamento e duplicados | ✅ |
+| 4 | Mensagens padrão com variáveis, envio WhatsApp com registro | ✅ |
+| 5 | Histórico do lead, anotações e painel de resultados | ✅ |
+| 6 | Automação: fila do dia, follow-up automático, equipe, CNPJ, tempo real | ✅ |
+
+## Automações
+
+- **Hoje:** abre direto na fila de quem precisa de contato: atrasados → retornos de hoje → novos → esquecidos.
+  Cada item tem Enviar (WhatsApp com a mensagem pronta), Respondeu, Adiar e Perdido.
+- **Mensagem pronta:** o CRM escolhe o modelo pela etapa, segmento e serviço do lead e preenche
+  `{saudacao}`, `{responsavel}`, `{empresa}`, `{segmento}`, `{servico}`, `{cidade}` e `{vendedor}`.
+  Ao enviar, registra o contato, conta a tentativa, move de Novo para Mensagem enviada e agenda o retorno.
+- **Follow-up automático:** ao mudar de etapa, o próximo retorno é agendado pela cadência
+  (Configurações → Follow-up automático). Depois de 3 mensagens sem resposta o CRM sugere marcar como perdido.
+- **CNPJ:** botão Buscar no cadastro preenche nome, telefone, e-mail, cidade, UF e responsável (BrasilAPI).
+- **Equipe:** todo usuário criado em Authentication vira membro e vê os mesmos leads; cada lead tem um vendedor.
+  Mudanças de um aparecem na tela do outro em tempo real.
+- **Resultados:** conversão, ciclo médio, funil, leads por origem e segmento, mensagens e fechamentos por vendedor.
 
 ---
 
@@ -110,6 +125,16 @@ js/auth.js            login, sessão, sair
 js/leads.js           CRUD de leads
 js/ui.js              toasts, confirmação, estados vazios, validação de formulário
 js/app.js             ponto de entrada do app.html
+js/fila.js            visão Hoje (fila do dia)
+js/envio.js           modal de envio de WhatsApp
+js/mensagens.js       variáveis, saudação e escolha do modelo (puro)
+js/importar.js        leitura de CSV, mapeamento e validação da importação (puro)
+js/importacao.js      tela de importação (usa SheetJS para .xlsx)
+js/cnpj.js            consulta de CNPJ na BrasilAPI
+js/metricas.js        números do painel (puro)
+js/painel.js          visão Resultados
+js/configuracoes.js   mensagens, cadência e equipe
+js/dados.js           acesso a membros, mensagens, cadência e histórico
 supabase/schema.sql   tabelas, constraints, índices, RLS, funções
 tests/                testes das funções puras
 scripts/build-vercel.sh  build da Vercel (gera js/config.js a partir das variáveis)
@@ -117,6 +142,9 @@ vercel.json           configuração do deploy na Vercel
 ```
 
 ## Regras de dados
+
+- **Equipe:** o acesso é por equipe (tabela `membros`). Deixe **Allow new users to sign up** desligado: qualquer usuário criado vê todos os leads.
+- **Duplicados valem para a equipe toda:** o mesmo telefone ou CNPJ não entra duas vezes, seja quem for que cadastrou.
 
 - **Telefone:** salvo como `55` + DDD + 8 ou 9 dígitos (ex.: `55` `11` `9xxxxxxxx`). O DDD é conferido contra a lista da Anatel; celular com 9 dígitos precisa começar com 9.
 - **CNPJ:** opcional, salvo só com os 14 dígitos, com os dígitos verificadores conferidos.

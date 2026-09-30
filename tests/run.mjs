@@ -2,6 +2,7 @@
 import { rodar } from './harness.js';
 import './validators.test.js';
 import './regras.test.js';
+import './automacao.test.js';
 
 const resultados = await rodar();
 const falhas = resultados.filter((r) => !r.ok);

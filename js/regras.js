@@ -1,6 +1,6 @@
 // Regras do pipeline: atraso de follow-up, tempo na etapa, "parados", filtros e ordenação.
 // Módulo puro (sem DOM, sem Supabase). Datas "agora" entram por parâmetro para facilitar teste.
-import { ETAPAS, ETAPAS_FINAIS } from './constants.js';
+import { ETAPAS, ETAPAS_FINAIS, ETAPAS_PROSPECCAO, TENTATIVAS_MAX } from './constants.js';
 import { hojeIso, normalizarTexto, somenteDigitos } from './validators.js';
 
 /** A partir de quantos dias na mesma etapa o lead conta como "parado". */
@@ -46,7 +46,7 @@ export function estaParado(lead, agora = new Date()) {
 
 /**
  * Aplica os filtros da tela.
- * filtros: { busca, segmento, servico, situacao: null | 'atrasados' | 'hoje' | 'parados' }
+ * filtros: { busca, segmento, servico, vendedor, situacao: null | 'atrasados' | 'hoje' | 'parados' }
  */
 export function filtrarLeads(leads, filtros = {}, agora = new Date()) {
   const termo = normalizarTexto(filtros.busca);
@@ -56,6 +56,7 @@ export function filtrarLeads(leads, filtros = {}, agora = new Date()) {
   return leads.filter((l) => {
     if (segmento && normalizarTexto(l.segmento) !== segmento) return false;
     if (filtros.servico && l.servico !== filtros.servico) return false;
+    if (filtros.vendedor && l.vendedor_id !== filtros.vendedor) return false;
 
     if (filtros.situacao === 'atrasados' && situacaoFollowUp(l, agora)?.tipo !== 'atrasado') return false;
     if (filtros.situacao === 'hoje' && situacaoFollowUp(l, agora)?.tipo !== 'hoje') return false;
@@ -129,4 +130,52 @@ export function matizDoNome(nome) {
   let h = 0;
   for (const c of String(nome ?? '')) h = (h * 31 + c.codePointAt(0)) % 360;
   return h;
+}
+
+// ---------------------------------------------------------------------
+// Fila do dia
+// ---------------------------------------------------------------------
+
+/** Mandou TENTATIVAS_MAX mensagens e nada de resposta: hora de pensar em "Perdido". */
+export function sugerirPerdido(lead) {
+  return ETAPAS_PROSPECCAO.includes(lead.etapa) && (lead.tentativas ?? 0) >= TENTATIVAS_MAX;
+}
+
+/** Soma dias a uma data "AAAA-MM-DD". */
+export function somarDias(iso, dias) {
+  const [a, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(a, m - 1, d + dias));
+  return dt.toISOString().slice(0, 10);
+}
+
+/**
+ * Monta a fila do dia. Cada lead cai em um grupo só, na ordem:
+ *   atrasados  follow-up vencido (o mais atrasado primeiro)
+ *   hoje       follow-up marcado para hoje
+ *   novos      em "Novo", nunca contatados e sem follow-up (o mais antigo primeiro)
+ *   esquecidos parados há DIAS_PARADO+ dias e sem follow-up nenhum (o mais parado primeiro)
+ * Fechado e Perdido nunca entram.
+ */
+export function montarFila(leads, agora = new Date()) {
+  const fila = { atrasados: [], hoje: [], novos: [], esquecidos: [] };
+  for (const l of leads) {
+    if (etapaFinal(l.etapa)) continue;
+    const fu = situacaoFollowUp(l, agora);
+    if (fu?.tipo === 'atrasado') fila.atrasados.push(l);
+    else if (fu?.tipo === 'hoje') fila.hoje.push(l);
+    else if (fu) continue; // follow-up futuro: está agendado, não precisa de nada hoje
+    else if (l.etapa === 'Novo' && !l.ultimo_contato_em) fila.novos.push(l);
+    else if (estaParado(l, agora)) fila.esquecidos.push(l);
+  }
+  const porData = (campo) => (a, b) => String(a[campo] ?? '').localeCompare(String(b[campo] ?? ''));
+  fila.atrasados.sort(porData('follow_up_em'));
+  fila.hoje.sort(porData('movido_em'));
+  fila.novos.sort(porData('criado_em'));
+  fila.esquecidos.sort(porData('movido_em'));
+  return fila;
+}
+
+/** Total de itens da fila. */
+export function totalFila(fila) {
+  return fila.atrasados.length + fila.hoje.length + fila.novos.length + fila.esquecidos.length;
 }

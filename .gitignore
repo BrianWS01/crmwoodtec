@@ -8,4 +8,5 @@ public/
 .DS_Store
 Thumbs.db
 .vscode/
+.claude/
 node_modules/

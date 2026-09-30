@@ -173,8 +173,19 @@ export function normalizarServico(valor) {
 export function normalizarEtapa(valor) {
   const chave = chaveTexto(valor);
   if (!chave) return null;
-  return ETAPAS.find((e) => chaveTexto(e) === chave) ?? null;
+  return ETAPAS.find((e) => chaveTexto(e) === chave) ?? SINONIMOS_ETAPA[chave] ?? null;
 }
+
+// Nomes comuns em planilhas e outros CRMs (chaves já passadas por chaveTexto())
+const SINONIMOS_ETAPA = {
+  novolead: 'Novo', lead: 'Novo', novocontato: 'Novo', aprospectar: 'Novo', prospeccao: 'Novo', naocontatado: 'Novo',
+  contatado: 'Mensagem enviada', abordado: 'Mensagem enviada', enviada: 'Mensagem enviada', mensagem: 'Mensagem enviada',
+  emcontato: 'Respondeu', respondido: 'Respondeu', interessado: 'Respondeu', negociacao: 'Respondeu',
+  reuniao: 'Reunião marcada', reuniaoagendada: 'Reunião marcada', agendado: 'Reunião marcada',
+  proposta: 'Proposta enviada', orcamento: 'Proposta enviada', orcamentoenviado: 'Proposta enviada',
+  fechou: 'Fechado', ganho: 'Fechado', ganhou: 'Fechado', cliente: 'Fechado', vendido: 'Fechado',
+  perdeu: 'Perdido', semsucesso: 'Perdido', desistiu: 'Perdido', descartado: 'Perdido',
+};
 
 // ---------------------------------------------------------------------
 // Datas
@@ -251,6 +262,18 @@ export function validarLead(dados) {
     if (!etapa) erros.etapa = 'Etapa não reconhecida.';
   }
 
+  let email = textoOuNull(dados.email);
+  if (email) {
+    email = email.toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = 'E-mail inválido.';
+  }
+
+  let uf = textoOuNull(dados.uf);
+  if (uf) {
+    uf = uf.toUpperCase();
+    if (!/^[A-Z]{2}$/.test(uf)) erros.uf = 'Use a sigla do estado com 2 letras (ex.: SP).';
+  }
+
   const followUp = textoOuNull(dados.follow_up_em);
   if (followUp && !dataIsoValida(followUp)) erros.follow_up_em = 'Data inválida.';
 
@@ -268,6 +291,9 @@ export function validarLead(dados) {
       origem: textoOuNull(dados.origem),
       observacoes: textoOuNull(dados.observacoes),
       follow_up_em: followUp,
+      email,
+      cidade: textoOuNull(dados.cidade),
+      uf,
     },
   };
 }
